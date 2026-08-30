@@ -5,7 +5,7 @@
 \title{Create a publication project}
 \usage{
 create_publication(
-  path,
+  path = ".",
   title = NULL,
   author = NULL,
   description = "A reproducible publication.",
@@ -20,8 +20,11 @@ create_publication(
 )
 }
 \arguments{
-\item{path}{Directory to create the project in. Must not already exist, or
-must be an empty directory.}
+\item{path}{Directory to create the project in. Defaults to the working
+directory, since R is normally run from the root of the repository that
+will hold the publication. The directory may already exist and already
+contain files -- a \verb{.git/}, a licence, whatever the repository came with
+-- as long as none of them are files this function itself writes.}
 
 \item{title}{Title of the publication. Defaults to a title-cased version of
 the directory name.}

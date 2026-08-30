@@ -8,10 +8,16 @@ Create reproducible, publication-ready GitHub Pages websites from structured
 R Markdown projects.
 
 ```r
-create_publication("my-analysis", title = "My Analysis", author = "Jane Doe")
+create_publication(title = "My Analysis", author = "Jane Doe")
 add_chapter("Sensitivity analysis")
 preview_publication()
 ```
+
+`create_publication()` scaffolds into the working directory by default, which
+is normally the root of the repository that will hold the publication. Pass a
+`path` to create the project elsewhere. Either way it refuses to overwrite a
+file that is already there, so an existing repository -- its `.git/`, its
+licence, whatever else it came with -- is safe to scaffold into.
 
 alberdilabr scaffolds the project, keeps chapter files and their ordering in
 step, validates the result, and wires up deployment. Rendering belongs to

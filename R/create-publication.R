@@ -10,8 +10,11 @@
 #' `bookdown::render_book()` alone and does not need this package at render
 #' time.
 #'
-#' @param path Directory to create the project in. Must not already exist, or
-#'   must be an empty directory.
+#' @param path Directory to create the project in. Defaults to the working
+#'   directory, since R is normally run from the root of the repository that
+#'   will hold the publication. The directory may already exist and already
+#'   contain files -- a `.git/`, a licence, whatever the repository came with
+#'   -- as long as none of them are files this function itself writes.
 #' @param title Title of the publication. Defaults to a title-cased version of
 #'   the directory name.
 #' @param author Author name. Defaults to `getOption("usethis.full_name")`, then
@@ -44,7 +47,7 @@
 #'   author = "Jane Doe"
 #' )
 #' }
-create_publication <- function(path,
+create_publication <- function(path = ".",
                                title = NULL,
                                author = NULL,
                                description = "A reproducible publication.",
@@ -57,12 +60,13 @@ create_publication <- function(path,
                                primary_color = "#0068D9",
                                open = rlang::is_interactive()) {
   path <- fs::path_abs(path)
-  check_target_directory(path)
-
   name <- fs::path_file(path)
   title <- title %||% default_title(name)
   author <- author %||% default_author()
   chapters <- as.character(chapters)
+
+  files <- publication_files(name, chapters, github_actions)
+  check_target_directory(path, files)
 
   if (!rlang::is_string(branch) || !nzchar(branch)) {
     pub_abort(
@@ -71,13 +75,22 @@ create_publication <- function(path,
     )
   }
 
-  # Everything below either completes or leaves no trace: if we created the
-  # directory and any step fails, the partial project is removed rather than
-  # left for the user to clean up by hand.
+  # Everything below either completes or leaves no trace. A project created in
+  # its own new directory is removed wholesale; one scaffolded into a directory
+  # that already existed -- the usual case, since `path` defaults to the
+  # repository root -- has its own files taken back out, leaving whatever was
+  # there before untouched.
   created_here <- !fs::dir_exists(path)
+  new_dirs <- scaffold_dirs()[!fs::dir_exists(fs::path(path, scaffold_dirs()))]
   success <- FALSE
   on.exit(
-    if (!success && created_here && fs::dir_exists(path)) fs::dir_delete(path),
+    if (!success && fs::dir_exists(path)) {
+      if (created_here) {
+        fs::dir_delete(path)
+      } else {
+        remove_scaffold(path, files, new_dirs)
+      }
+    },
     add = TRUE
   )
 
@@ -116,9 +129,16 @@ create_publication <- function(path,
   }
 
   success <- TRUE
+  # When the project was scaffolded in place the .Rproj sits in the working
+  # directory, so pointing at `name/name.Rproj` would name a path that does
+  # not exist.
+  rproj <- paste0(name, ".Rproj")
+  if (path != fs::path_abs(".")) {
+    rproj <- as.character(fs::path(name, rproj))
+  }
   cli::cli_h2("Next steps")
   cli::cli_ol(c(
-    "Open {.path {fs::path(name, paste0(name, '.Rproj'))}}.",
+    "Open {.path {rproj}}.",
     "Render the site with {.run alberdilabr::render_publication()}.",
     "Push to GitHub and set Settings {cli::symbol$arrow_right} Pages {cli::symbol$arrow_right} Source to {.val GitHub Actions}."
   ))
@@ -131,7 +151,48 @@ create_publication <- function(path,
 
 # Steps -----------------------------------------------------------------------
 
-check_target_directory <- function(path, call = rlang::caller_env()) {
+# Every file the scaffold writes, relative to the project root, so that the
+# target directory can be vetted before anything is written. Scaffolding into
+# an existing repository is the common case, so "is the directory empty?" is
+# the wrong question: what matters is whether we would clobber a file that is
+# already there.
+publication_files <- function(name, chapters, github_actions) {
+  files <- c(
+    "index.Rmd", "_bookdown.yml", "_output.yml", "README.md", ".gitignore",
+    "references.bib", paste0(name, ".Rproj"),
+    fs::path("R", "setup.R"), fs::path("assets", "style.css"),
+    fs::path("data", "README.md"), fs::path("figures", "README.md")
+  )
+  if (isTRUE(github_actions)) {
+    files <- c(files, fs::path(".github", "workflows", "publish.yml"))
+  }
+  if (length(chapters) > 0) {
+    files <- c(files, chapter_path(seq_along(chapters), make_slug(chapters)))
+  }
+  as.character(files)
+}
+
+# Directories the scaffold creates, parents before children so that reversing
+# the order removes the deepest first.
+scaffold_dirs <- function() {
+  c("chapters", "R", "data", "figures", "assets", ".github", ".github/workflows")
+}
+
+# Undo an in-place scaffold. The pre-flight check guarantees every path in
+# `files` is one we wrote, and `dirs` holds only directories that did not exist
+# beforehand, so this cannot take a user's own work with it.
+remove_scaffold <- function(path, files, dirs) {
+  present <- fs::path(path, files)
+  fs::file_delete(present[fs::file_exists(present)])
+  for (dir in rev(fs::path(path, dirs))) {
+    if (fs::dir_exists(dir) && length(fs::dir_ls(dir, all = TRUE)) == 0) {
+      fs::dir_delete(dir)
+    }
+  }
+  invisible(TRUE)
+}
+
+check_target_directory <- function(path, files, call = rlang::caller_env()) {
   if (fs::file_exists(path) && !fs::dir_exists(path)) {
     pub_abort(
       c(
@@ -142,20 +203,22 @@ check_target_directory <- function(path, call = rlang::caller_env()) {
       call = call
     )
   }
-  if (fs::dir_exists(path)) {
-    contents <- fs::dir_ls(path, all = TRUE)
-    contents <- contents[!fs::path_file(contents) %in% c(".", "..")]
-    if (length(contents) > 0) {
-      pub_abort(
-        c(
-          "Cannot create publication at {.path {path}}.",
-          x = "The directory already exists and is not empty.",
-          i = "Choose a different {.arg path}, or empty the directory first."
-        ),
-        class = "alberdilabr_error_exists",
-        call = call
-      )
-    }
+  if (!fs::dir_exists(path)) {
+    return(invisible(TRUE))
+  }
+
+  present <- files[fs::file_exists(fs::path(path, files))]
+  if (length(present) > 0) {
+    pub_abort(
+      c(
+        "Cannot create publication in {.path {path}}.",
+        x = "{length(present)} file{?s} would be overwritten: {.file {present}}.",
+        i = "Move {cli::qty(length(present))}{?it/them} aside, or choose a \
+             different {.arg path}."
+      ),
+      class = "alberdilabr_error_exists",
+      call = call
+    )
   }
   invisible(TRUE)
 }

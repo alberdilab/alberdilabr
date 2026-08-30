@@ -1,3 +1,16 @@
+# alberdilabr 0.1.2
+
+* `create_publication()` defaults `path` to the working directory, matching the
+  rest of the package and the way R is normally run: from the root of the
+  repository that will hold the publication.
+* `create_publication()` no longer requires an empty directory. It refuses only
+  when a file it would write is already present, and reports every collision
+  before writing anything, so scaffolding into an existing repository -- its
+  `.git/`, its licence, its sources -- is now the expected way to use it.
+* A failed creation still leaves no trace. When the project was scaffolded into
+  a directory that already existed, only the files and directories the scaffold
+  itself created are removed.
+
 # alberdilabr 0.1.0
 
 First release.

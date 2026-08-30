@@ -1,6 +1,6 @@
 Package: alberdilabr
 Title: Scaffold Reproducible, Publication-Ready 'bookdown' Websites
-Version: 0.1.0
+Version: 0.1.2
 Authors@R: 
     person("Antton", "Alberdi", , "antton.alberdi@sund.ku.dk", role = c("aut", "cre"))
 Description: Creates opinionated, reproducible publication projects that render

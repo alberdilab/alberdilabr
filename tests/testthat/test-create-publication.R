@@ -63,19 +63,63 @@ test_that("a project can be created with no starter chapters", {
   expect_length(chapter_files(path), 0)
 })
 
-test_that("creating over an existing non-empty directory fails safely", {
+test_that("an existing directory is scaffolded in place", {
+  dir <- withr::local_tempdir()
+  path <- file.path(dir, "repo")
+  dir.create(path)
+  writeLines("keep me", file.path(path, "important.txt"))
+  dir.create(file.path(path, "src"))
+
+  suppressMessages(create_publication(
+    path, renv = FALSE, git = FALSE, open = FALSE
+  ))
+
+  expect_true(file.exists(file.path(path, "_bookdown.yml")))
+  expect_true(file.exists(file.path(path, "repo.Rproj")))
+  # Whatever the directory already held is left alone.
+  expect_identical(readLines(file.path(path, "important.txt")), "keep me")
+  expect_true(dir.exists(file.path(path, "src")))
+})
+
+test_that("path defaults to the working directory", {
+  dir <- withr::local_tempdir(pattern = "inplace")
+  withr::local_dir(dir)
+
+  suppressMessages(create_publication(
+    renv = FALSE, git = FALSE, open = FALSE, chapters = "Introduction"
+  ))
+
+  expect_true(file.exists("_bookdown.yml"))
+  expect_true(file.exists(paste0(basename(dir), ".Rproj")))
+  expect_true(file.exists(file.path("chapters", "01-introduction.Rmd")))
+})
+
+test_that("a file the scaffold would overwrite stops it before anything is written", {
   dir <- withr::local_tempdir()
   path <- file.path(dir, "occupied")
   dir.create(path)
+  writeLines("mine", file.path(path, "index.Rmd"))
   writeLines("keep me", file.path(path, "important.txt"))
 
   expect_error(
     create_publication(path, renv = FALSE, git = FALSE, open = FALSE),
     class = "alberdilabr_error_exists"
   )
-  # The pre-existing contents must be untouched.
+  # The pre-existing contents must be untouched, and nothing new written.
+  expect_identical(readLines(file.path(path, "index.Rmd")), "mine")
   expect_identical(readLines(file.path(path, "important.txt")), "keep me")
   expect_false(file.exists(file.path(path, "_bookdown.yml")))
+})
+
+test_that("creating over an existing file fails", {
+  dir <- withr::local_tempdir()
+  path <- file.path(dir, "afile")
+  writeLines("x", path)
+
+  expect_error(
+    create_publication(path, renv = FALSE, git = FALSE, open = FALSE),
+    class = "alberdilabr_error_exists"
+  )
 })
 
 test_that("a failed creation leaves no partial project behind", {
@@ -89,6 +133,32 @@ test_that("a failed creation leaves no partial project behind", {
     "boom"
   )
   expect_false(dir.exists(path))
+})
+
+test_that("a failed in-place creation removes only what it wrote", {
+  dir <- withr::local_tempdir()
+  path <- file.path(dir, "repo")
+  dir.create(path)
+  writeLines("keep me", file.path(path, "important.txt"))
+  dir.create(file.path(path, "R"))
+  writeLines("mine", file.path(path, "R", "helpers.R"))
+
+  local_mocked_bindings(write_starter_chapters = function(...) stop("boom"))
+  expect_error(
+    suppressMessages(create_publication(path, renv = FALSE, git = FALSE, open = FALSE)),
+    "boom"
+  )
+
+  expect_true(dir.exists(path))
+  expect_identical(readLines(file.path(path, "important.txt")), "keep me")
+  # A directory that was already there survives, along with its contents.
+  expect_identical(readLines(file.path(path, "R", "helpers.R")), "mine")
+  # Everything the scaffold wrote is gone, directories included.
+  expect_false(file.exists(file.path(path, "index.Rmd")))
+  expect_false(file.exists(file.path(path, "R", "setup.R")))
+  expect_false(file.exists(file.path(path, "_bookdown.yml")))
+  expect_false(dir.exists(file.path(path, "chapters")))
+  expect_false(dir.exists(file.path(path, "assets")))
 })
 
 test_that("the workflow matches the project's renv state", {
