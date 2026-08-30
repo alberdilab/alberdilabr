@@ -10,7 +10,7 @@ render_publication(project = ".", output_format = NULL, quiet = FALSE, ...)
 \item{project}{Path to the publication project.}
 
 \item{output_format}{Passed to \code{bookdown::render_book()}. \code{NULL} uses the
-formats declared in \verb{_output.yml}.}
+formats declared in the \code{output} field of \code{index.Rmd}.}
 
 \item{quiet}{Whether to suppress knitr's progress output.}
 

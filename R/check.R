@@ -68,18 +68,37 @@ check_structure <- function(project, config) {
   has <- function(p) fs::file_exists(fs::path(project, p))
   has_dir <- function(p) fs::dir_exists(fs::path(project, p))
 
-  for (f in c("index.Rmd", "_bookdown.yml", "_output.yml")) {
+  for (f in c("index.Rmd", "_bookdown.yml")) {
     out <- c(out, list(
       if (has(f)) pass("structure", sprintf("%s exists", f))
       else fail("structure", sprintf("%s is missing", f))
     ))
   }
-  for (d in c("chapters", "R", "assets")) {
+  for (d in c(support_dir())) {
     out <- c(out, list(
       if (has_dir(d)) pass("structure", sprintf("%s/ exists", d))
       else warn("structure", sprintf("%s/ is missing", d))
     ))
   }
+
+  # An index.Rmd with no output format is the one failure bookdown does not
+  # report: it falls back to gitbook and produces a site that looks built but
+  # is not the one the project asked for.
+  front <- front_matter(project)
+  out <- c(out, list(
+    if (length(front$output) > 0)
+      pass("structure", sprintf(
+        "index.Rmd declares output format%s: %s",
+        if (length(front$output) == 1) "" else "s",
+        paste(names(front$output), collapse = ", ")
+      ))
+    else if (has("_output.yml"))
+      pass("structure", "_output.yml declares the output format")
+    else warn(
+      "structure",
+      "index.Rmd declares no output format; bookdown will fall back to gitbook"
+    )
+  ))
 
   chapters <- config_chapters(config)
   out <- c(out, list(
@@ -98,21 +117,20 @@ check_structure <- function(project, config) {
     ))
   ))
 
-  # Files sitting in chapters/ that nothing references are silently excluded
-  # from the book, which is a common and confusing mistake.
-  if (has_dir("chapters")) {
-    on_disk <- fs::path_rel(
-      fs::dir_ls(fs::path(project, "chapters"), glob = "*.Rmd"),
-      project
-    )
-    stray <- setdiff(as.character(on_disk), chapters$path)
-    out <- c(out, list(
-      if (length(stray) == 0) pass("structure", "no unregistered chapter files")
-      else warn("structure", sprintf(
-        "%s not registered in _bookdown.yml", paste(stray, collapse = ", ")
-      ))
+  # Chapter files that nothing references are silently excluded from the book,
+  # which is a common and confusing mistake. The merged book file is bookdown's
+  # own scratch output, not a stray chapter.
+  on_disk <- as.character(fs::path_file(
+    fs::dir_ls(project, glob = "*.Rmd", type = "file")
+  ))
+  merged <- paste0(config$book_filename %||% "_main", ".Rmd")
+  stray <- setdiff(on_disk, c("index.Rmd", merged, chapters$path))
+  out <- c(out, list(
+    if (length(stray) == 0) pass("structure", "no unregistered chapter files")
+    else warn("structure", sprintf(
+      "%s not registered in _bookdown.yml", paste(stray, collapse = ", ")
     ))
-  }
+  ))
 
   out <- c(out, list(
     if (!is.null(config$output_dir))
@@ -120,24 +138,44 @@ check_structure <- function(project, config) {
     else warn("structure", "output_dir not set; bookdown will default to _book/")
   ))
 
+  # The bibliography is a path in index.Rmd, so check what is declared rather
+  # than a fixed location.
+  bib <- as.character(unlist(front$bibliography, use.names = FALSE))
   out <- c(out, list(
-    if (has("references.bib")) pass("structure", "references.bib exists")
-    else warn("structure", "references.bib is missing")
+    if (length(bib) == 0) warn("structure", "index.Rmd declares no bibliography")
+    else if (all(fs::file_exists(fs::path(project, bib))))
+      pass("structure", sprintf("bibliography exists: %s", paste(bib, collapse = ", ")))
+    else fail("structure", sprintf(
+      "index.Rmd references %s, which does not exist",
+      paste(bib[!fs::file_exists(fs::path(project, bib))], collapse = ", ")
+    ))
   ))
 
-  css <- output_css(project)
+  css <- output_css(front)
   out <- c(out, lapply(css[!fs::file_exists(fs::path(project, css))], function(f) {
-    fail("structure", sprintf("_output.yml references %s, which does not exist", f))
+    fail("structure", sprintf("index.Rmd references %s, which does not exist", f))
   }))
 
   out
 }
 
-output_css <- function(project) {
-  path <- output_config_path(project)
-  if (!fs::file_exists(path)) return(character(0))
-  cfg <- tryCatch(yaml::read_yaml(path), error = function(e) NULL)
-  css <- cfg[["bookdown::bs4_book"]][["css"]]
+# index.Rmd's YAML front matter, which carries the output format, the
+# bibliography and the site metadata. Read with the package's own YAML reader
+# rather than rmarkdown's, which is only a suggested dependency.
+front_matter <- function(project) {
+  path <- fs::path(project, "index.Rmd")
+  if (!fs::file_exists(path)) return(list())
+  lines <- read_lines_utf8(path)
+  if (length(lines) == 0 || !grepl("^---\\s*$", lines[1])) return(list())
+  close_at <- which(grepl("^(---|\\.\\.\\.)\\s*$", lines))[-1]
+  if (length(close_at) == 0) return(list())
+  block <- lines[seq(2, close_at[1] - 1)]
+  parsed <- tryCatch(yaml::yaml.load(paste(block, collapse = "\n")), error = function(e) NULL)
+  if (is.list(parsed)) parsed else list()
+}
+
+output_css <- function(front) {
+  css <- front$output[["bookdown::bs4_book"]][["css"]]
   if (is.null(css)) character(0) else as.character(css)
 }
 

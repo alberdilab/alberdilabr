@@ -3,12 +3,12 @@ test_that("add_chapter() creates, names and registers a chapter", {
 
   result <- suppressMessages(add_chapter("Sensitivity Analysis", project = path))
 
-  expect_identical(result, "chapters/02-sensitivity-analysis.Rmd")
+  expect_identical(result, "02-sensitivity-analysis.Rmd")
   expect_true(file.exists(file.path(path, result)))
   expect_identical(
     unlist(rmd_files(path)),
-    c("index.Rmd", "chapters/01-introduction.Rmd",
-      "chapters/02-sensitivity-analysis.Rmd")
+    c("index.Rmd", "01-introduction.Rmd",
+      "02-sensitivity-analysis.Rmd")
   )
 
   body <- readLines(file.path(path, result))
@@ -20,9 +20,9 @@ test_that("add_chapter() accepts an explicit slug", {
 
   suppressMessages(add_chapter("A Very Long Title", slug = "short", project = path))
 
-  expect_true(file.exists(file.path(path, "chapters", "01-short.Rmd")))
+  expect_true(file.exists(file.path(path, "01-short.Rmd")))
   expect_identical(
-    readLines(file.path(path, "chapters", "01-short.Rmd"))[1],
+    readLines(file.path(path, "01-short.Rmd"))[1],
     "# A Very Long Title {#short}"
   )
 })
@@ -36,8 +36,8 @@ test_that("add_chapter() inserts at a requested position and renumbers", {
 
   expect_identical(
     unlist(rmd_files(path)),
-    c("index.Rmd", "chapters/01-introduction.Rmd", "chapters/02-study-design.Rmd",
-      "chapters/03-methods.Rmd", "chapters/04-results.Rmd")
+    c("index.Rmd", "01-introduction.Rmd", "02-study-design.Rmd",
+      "03-methods.Rmd", "04-results.Rmd")
   )
   # Configuration and disk agree after renumbering.
   expect_setequal(
@@ -52,7 +52,7 @@ test_that("add_chapter(after = 0) inserts first", {
 
   suppressMessages(add_chapter("Introduction", after = 0, project = path))
 
-  expect_identical(unlist(rmd_files(path))[2], "chapters/01-introduction.Rmd")
+  expect_identical(unlist(rmd_files(path))[2], "01-introduction.Rmd")
 })
 
 test_that("duplicate chapters are rejected without touching the project", {
@@ -104,7 +104,7 @@ test_that("remove_chapter() deletes the file and renumbers the rest", {
 
   expect_identical(
     unlist(rmd_files(path)),
-    c("index.Rmd", "chapters/01-introduction.Rmd", "chapters/02-results.Rmd")
+    c("index.Rmd", "01-introduction.Rmd", "02-results.Rmd")
   )
   expect_identical(chapter_files(path), c("01-introduction.Rmd", "02-results.Rmd"))
 })
@@ -114,8 +114,8 @@ test_that("remove_chapter(delete_file = FALSE) keeps the file but unregisters it
 
   suppressMessages(remove_chapter("methods", delete_file = FALSE, project = path))
 
-  expect_false("chapters/02-methods.Rmd" %in% unlist(rmd_files(path)))
-  expect_true(file.exists(file.path(path, "chapters", "02-methods.Rmd")))
+  expect_false("02-methods.Rmd" %in% unlist(rmd_files(path)))
+  expect_true(file.exists(file.path(path, "02-methods.Rmd")))
 })
 
 test_that("removing an unknown chapter errors and changes nothing", {
@@ -139,8 +139,8 @@ test_that("move_chapter() reorders and keeps files in sync", {
 
   expect_identical(
     unlist(rmd_files(path)),
-    c("index.Rmd", "chapters/01-introduction.Rmd", "chapters/02-discussion.Rmd",
-      "chapters/03-methods.Rmd", "chapters/04-results.Rmd")
+    c("index.Rmd", "01-introduction.Rmd", "02-discussion.Rmd",
+      "03-methods.Rmd", "04-results.Rmd")
   )
   expect_setequal(
     chapter_files(path),
@@ -154,19 +154,19 @@ test_that("move_chapter() can move a chapter to the front", {
 
   suppressMessages(move_chapter("results", after = 0, project = path))
 
-  expect_identical(unlist(rmd_files(path))[2], "chapters/01-results.Rmd")
+  expect_identical(unlist(rmd_files(path))[2], "01-results.Rmd")
   # Swapping neighbours must not lose a file to a mid-rename collision.
   expect_length(chapter_files(path), 3)
 })
 
 test_that("a swap of adjacent chapters preserves both files", {
   path <- local_publication(chapters = c("Introduction", "Methods"))
-  intro <- readLines(file.path(path, "chapters", "01-introduction.Rmd"))
+  intro <- readLines(file.path(path, "01-introduction.Rmd"))
 
   suppressMessages(move_chapter("methods", after = 0, project = path))
 
   expect_identical(chapter_files(path), c("01-methods.Rmd", "02-introduction.Rmd"))
-  expect_identical(readLines(file.path(path, "chapters", "02-introduction.Rmd")), intro)
+  expect_identical(readLines(file.path(path, "02-introduction.Rmd")), intro)
 })
 
 test_that("chapters can be referenced by slug, filename or path", {
@@ -178,7 +178,7 @@ test_that("chapters can be referenced by slug, filename or path", {
   )
   expect_no_error(
     suppressMessages(
-      move_chapter("chapters/02-methods.Rmd", after = 0, project = path)
+      move_chapter("02-methods.Rmd", after = 0, project = path)
     )
   )
 })

@@ -13,7 +13,7 @@ test_that("a freshly created project passes every check", {
 
 test_that("a missing registered chapter file is reported as a failure", {
   path <- local_publication(chapters = c("Introduction", "Methods"))
-  file.remove(file.path(path, "chapters", "02-methods.Rmd"))
+  file.remove(file.path(path, "02-methods.Rmd"))
 
   expect_identical(check_status(path, "registered file.*missing"), "fail")
 })
@@ -22,7 +22,7 @@ test_that("an unregistered chapter file is reported", {
   path <- local_publication(chapters = "Introduction")
   writeLines(
     c("# Orphan {#orphan}", "", "Never registered."),
-    file.path(path, "chapters", "99-orphan.Rmd")
+    file.path(path, "99-orphan.Rmd")
   )
 
   expect_identical(check_status(path, "not registered in _bookdown.yml"), "warn")
@@ -32,7 +32,7 @@ test_that("duplicate chapter identifiers are reported as a failure", {
   path <- local_publication(chapters = c("Introduction", "Methods"))
   writeLines(
     c("# Methods {#introduction}", "", "Clashing id."),
-    file.path(path, "chapters", "02-methods.Rmd")
+    file.path(path, "02-methods.Rmd")
   )
 
   expect_identical(check_status(path, "duplicate chapter identifier"), "fail")
@@ -42,7 +42,7 @@ test_that("a chapter with two top-level headings is reported as a failure", {
   path <- local_publication(chapters = "Introduction")
   writeLines(
     c("# One {#one}", "", "text", "", "# Two {#two}", "", "more"),
-    file.path(path, "chapters", "01-introduction.Rmd")
+    file.path(path, "01-introduction.Rmd")
   )
 
   expect_identical(check_status(path, "top-level headings"), "fail")
@@ -52,7 +52,7 @@ test_that("a chapter heading without an identifier is reported", {
   path <- local_publication(chapters = "Introduction")
   writeLines(
     c("# Introduction", "", "No anchor."),
-    file.path(path, "chapters", "01-introduction.Rmd")
+    file.path(path, "01-introduction.Rmd")
   )
 
   expect_identical(check_status(path, "without"), "warn")
@@ -62,7 +62,7 @@ test_that("a heading id that disagrees with the filename is reported", {
   path <- local_publication(chapters = "Introduction")
   writeLines(
     c("# Introduction {#something-else}", "", "Drifted."),
-    file.path(path, "chapters", "01-introduction.Rmd")
+    file.path(path, "01-introduction.Rmd")
   )
 
   expect_identical(check_status(path, "does not match filename slug"), "warn")
@@ -74,7 +74,7 @@ test_that("duplicate knitr chunk labels are reported as a failure", {
     slug <- sub("^[0-9]+-|[.]Rmd$", "", f)
     writeLines(
       c(paste0("# X {#", slug, "}"), "", "```{r shared-label}", "1 + 1", "```"),
-      file.path(path, "chapters", f)
+      file.path(path, f)
     )
   }
 
@@ -86,7 +86,7 @@ test_that("a captioned figure without a chunk label is reported", {
   writeLines(
     c("# Introduction {#introduction}", "",
       '```{r fig.cap = "Uncrossreferenceable."}', "plot(1)", "```"),
-    file.path(path, "chapters", "01-introduction.Rmd")
+    file.path(path, "01-introduction.Rmd")
   )
 
   expect_identical(check_status(path, "unlabelled figure"), "warn")
@@ -104,7 +104,7 @@ test_that("headings inside code fences are not mistaken for chapter headings", {
       "```",
       "# Nor this, in a plain fence",
       "```"),
-    file.path(path, "chapters", "01-introduction.Rmd")
+    file.path(path, "01-introduction.Rmd")
   )
 
   res <- suppressMessages(check_publication(path, quiet = TRUE))
@@ -116,7 +116,7 @@ test_that("YAML front matter is not scanned for headings", {
   writeLines(
     c("---", "title: Something", "---", "",
       "# Introduction {#introduction}", "", "text"),
-    file.path(path, "chapters", "01-introduction.Rmd")
+    file.path(path, "01-introduction.Rmd")
   )
 
   res <- suppressMessages(check_publication(path, quiet = TRUE))
@@ -158,9 +158,34 @@ test_that("malformed _bookdown.yml produces an actionable error", {
   )
 })
 
-test_that("a missing CSS file referenced by _output.yml is reported", {
+test_that("a missing CSS file referenced by index.Rmd is reported", {
   path <- local_publication()
-  file.remove(file.path(path, "assets", "style.css"))
+  file.remove(file.path(path, "alberdilabr", "style.css"))
 
   expect_identical(check_status(path, "which does not exist"), "fail")
+})
+
+test_that("a missing bibliography is reported", {
+  path <- local_publication()
+  file.remove(file.path(path, "alberdilabr", "references.bib"))
+
+  expect_identical(check_status(path, "references.bib, which does not exist"), "fail")
+})
+
+test_that("an index.Rmd with no output format is reported", {
+  path <- local_publication()
+  index <- readLines(file.path(path, "index.Rmd"))
+  # Drop the output: block, which runs to the end of the front matter.
+  at <- grep("^output:", index)
+  close_at <- grep("^---$", index)[2]
+  writeLines(index[-seq(at, close_at - 1)], file.path(path, "index.Rmd"))
+
+  expect_identical(check_status(path, "fall back to gitbook"), "warn")
+})
+
+test_that("an unregistered chapter file in the root is reported", {
+  path <- local_publication()
+  writeLines("# Stray {#stray}", file.path(path, "99-stray.Rmd"))
+
+  expect_identical(check_status(path, "not registered"), "warn")
 })

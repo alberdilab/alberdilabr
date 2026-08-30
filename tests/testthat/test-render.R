@@ -40,7 +40,7 @@ test_that("the generated project renders without the alberdilabr package", {
 
 test_that("render_publication() refuses to run with missing chapter files", {
   path <- local_publication(chapters = c("Introduction", "Methods"))
-  file.remove(file.path(path, "chapters", "02-methods.Rmd"))
+  file.remove(file.path(path, "02-methods.Rmd"))
 
   expect_error(
     render_publication(path),
@@ -65,7 +65,7 @@ test_that("check_publication(render = TRUE) reports a broken build", {
   writeLines(
     c("# Introduction {#introduction}", "",
       "```{r}", "stop('deliberate failure')", "```"),
-    file.path(path, "chapters", "01-introduction.Rmd")
+    file.path(path, "01-introduction.Rmd")
   )
 
   res <- suppressMessages(check_publication(path, render = TRUE, quiet = TRUE))

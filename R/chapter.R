@@ -166,7 +166,7 @@ remove_chapter <- function(chapter,
     if (isTRUE(delete_file)) {
       fs::file_delete(parked)
     } else {
-      fs::file_move(parked, fs::path(project, "chapters", fs::path_file(target$path)))
+      fs::file_move(parked, fs::path(project, fs::path_file(target$path)))
     }
   }
 
@@ -271,7 +271,7 @@ renumber_chapter_files <- function(project, paths) {
   wanted <- ifelse(
     is.na(slugs),
     paths,
-    paste0("chapters/", pad_number(seq_along(paths)), "-", slugs, ".Rmd")
+    chapter_path(seq_along(paths), slugs)
   )
 
   changing <- which(wanted != paths)
@@ -287,7 +287,7 @@ renumber_chapter_files <- function(project, paths) {
       staged <- c(staged, NA_character_)
       next
     }
-    tmp <- fs::file_temp(tmp_dir = fs::path(project, "chapters"), ext = "tmp")
+    tmp <- fs::file_temp(tmp_dir = project, ext = "tmp")
     fs::file_move(from, tmp)
     staged <- c(staged, as.character(tmp))
   }

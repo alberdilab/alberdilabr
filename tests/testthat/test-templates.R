@@ -38,7 +38,7 @@ test_that("titles containing markup survive templating unescaped", {
   suppressMessages(add_chapter("Costs & Benefits", project = path))
 
   expect_identical(
-    readLines(file.path(path, "chapters", "01-costs-benefits.Rmd"))[1],
+    readLines(file.path(path, "01-costs-benefits.Rmd"))[1],
     "# Costs & Benefits {#costs-benefits}"
   )
 })
@@ -46,15 +46,15 @@ test_that("titles containing markup survive templating unescaped", {
 test_that("configuration round-trips unknown keys", {
   path <- local_publication(chapters = "Introduction")
   config <- read_bookdown_config(path)
-  config$before_chapter_script <- "R/setup.R"
+  config$before_chapter_script <- "alberdilabr/setup.R"
   write_bookdown_config(path, config)
 
   reread <- yaml::read_yaml(file.path(path, "_bookdown.yml"))
-  expect_identical(reread$before_chapter_script, "R/setup.R")
+  expect_identical(reread$before_chapter_script, "alberdilabr/setup.R")
 
   # And a chapter operation must not drop it.
   suppressMessages(add_chapter("Methods", project = path))
   reread <- yaml::read_yaml(file.path(path, "_bookdown.yml"))
-  expect_identical(reread$before_chapter_script, "R/setup.R")
+  expect_identical(reread$before_chapter_script, "alberdilabr/setup.R")
   expect_length(reread$rmd_files, 3)
 })

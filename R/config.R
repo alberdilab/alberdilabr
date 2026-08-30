@@ -8,10 +8,6 @@ bookdown_config_path <- function(project) {
   fs::path(project, "_bookdown.yml")
 }
 
-output_config_path <- function(project) {
-  fs::path(project, "_output.yml")
-}
-
 read_bookdown_config <- function(project) {
   path <- bookdown_config_path(project)
   if (!fs::file_exists(path)) {

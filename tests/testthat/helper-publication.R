@@ -22,8 +22,10 @@ rmd_files <- function(project) {
   yaml::read_yaml(file.path(project, "_bookdown.yml"))$rmd_files
 }
 
+# Chapter files are the numbered .Rmd files in the project root; index.Rmd is
+# the landing page, not a chapter.
 chapter_files <- function(project) {
-  sort(list.files(file.path(project, "chapters"), pattern = "[.]Rmd$"))
+  sort(list.files(project, pattern = "^[0-9]+-.*[.]Rmd$"))
 }
 
 # Status of a single named check, for asserting that a broken fixture is caught.

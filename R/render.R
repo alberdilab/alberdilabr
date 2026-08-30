@@ -8,7 +8,7 @@
 #'
 #' @param project Path to the publication project.
 #' @param output_format Passed to `bookdown::render_book()`. `NULL` uses the
-#'   formats declared in `_output.yml`.
+#'   formats declared in the `output` field of `index.Rmd`.
 #' @param quiet Whether to suppress knitr's progress output.
 #' @param ... Further arguments passed to `bookdown::render_book()`.
 #'

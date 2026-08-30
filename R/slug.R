@@ -1,5 +1,5 @@
 # Slugs are the stable identity of a chapter. They appear in three places that
-# must agree: the filename (`chapters/NN-<slug>.Rmd`), the `rmd_files` entry in
+# must agree: the filename (`NN-<slug>.Rmd`), the `rmd_files` entry in
 # `_bookdown.yml`, and the heading identifier (`# Title {#<slug>}`) that
 # bookdown turns into the page anchor and cross-reference target.
 
@@ -62,13 +62,16 @@ chapter_filename <- function(number, slug) {
   paste0(pad_number(number), "-", slug, ".Rmd")
 }
 
+# Chapters live in the project root, alongside index.Rmd: they are the
+# documents the author works on, and bookdown reads them from there without
+# further configuration.
 chapter_path <- function(number, slug) {
-  paste0("chapters/", chapter_filename(number, slug))
+  chapter_filename(number, slug)
 }
 
-# Returns NA for paths that do not follow the `chapters/NN-slug.Rmd` convention
-# (for example a hand-added `chapters/notes.Rmd`), which lets check_publication()
-# report them rather than crash on them.
+# Returns NA for paths that do not follow the `NN-slug.Rmd` convention (for
+# example a hand-added `notes.Rmd`), which lets check_publication() report them
+# rather than crash on them.
 parse_chapter_path <- function(path) {
   base <- fs::path_file(path)
   m <- regmatches(base, regexec("^([0-9]+)-(.+)\\.Rmd$", base, ignore.case = TRUE))

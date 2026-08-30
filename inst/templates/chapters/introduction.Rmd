@@ -4,8 +4,8 @@ State the problem, why it matters, and what this publication contributes.
 
 ## Background {#{{{slug}}}-background}
 
-Summarise the relevant prior work. Cite sources from `references.bib` with
-`[@R-base]`, which renders as [@R-base].
+Summarise the relevant prior work. Cite sources from
+`alberdilabr/references.bib` with `[@R-base]`, which renders as [@R-base].
 
 ## Aims {#{{{slug}}}-aims}
 

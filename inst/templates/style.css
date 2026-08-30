@@ -1,5 +1,5 @@
 /* Custom styling for {{{title}}}.
-   Loaded by bookdown::bs4_book via the `css` entry in _output.yml. */
+   Loaded by bookdown::bs4_book via the `css` entry in index.Rmd. */
 
 :root {
   --publication-accent: {{{primary_color}}};

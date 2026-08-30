@@ -68,6 +68,18 @@ read_lines_utf8 <- function(path) {
   lines
 }
 
+# Project layout --------------------------------------------------------------
+
+# Everything the scaffold owns that is not an R Markdown document lives in one
+# directory, so the project root holds the author's documents and little else.
+# The name is a constant rather than an option: chapters refer to these paths
+# in `source()` calls and `fig.path`, so it has to be predictable.
+support_dir <- function() "alberdilabr"
+
+support_path <- function(...) {
+  as.character(fs::path(support_dir(), ...))
+}
+
 # Project discovery -----------------------------------------------------------
 
 #' Locate the root of a publication project

@@ -4,10 +4,21 @@ author: "{{{author}}}"
 date: "`r format(Sys.Date(), '%d %B %Y')`"
 site: bookdown::bookdown_site
 documentclass: book
-bibliography: [references.bib]
+bibliography: [alberdilabr/references.bib]
 biblio-style: apalike
 link-citations: yes
 description: "{{{description}}}"
+output:
+  bookdown::bs4_book:
+    theme:
+      primary: "{{{primary_color}}}"
+    css: alberdilabr/style.css
+    split_bib: false
+{{#repo}}
+    repo:
+      base: https://github.com/{{{repo}}}
+      branch: {{{branch}}}
+{{/repo}}
 ---
 
 # Welcome {#welcome .unnumbered}
@@ -18,9 +29,9 @@ knitr::opts_chunk$set(
   message = FALSE,
   warning = FALSE,
   fig.align = "center",
-  fig.path = "figures/"
+  fig.path = "alberdilabr/figures/"
 )
-source("R/setup.R")
+source("alberdilabr/setup.R")
 ```
 
 This is the landing page of **{{{title}}}**.
@@ -39,3 +50,8 @@ bookdown::render_book("index.Rmd")
 
 The rendered site is written to `_site/` and published to GitHub Pages by the
 workflow in `.github/workflows/publish.yml`.
+
+Chapters are the numbered `.Rmd` files beside this one, in the order listed in
+`_bookdown.yml`. Everything the render needs but nobody edits day to day --
+shared setup, styling, the bibliography, generated figures -- lives in
+`alberdilabr/`.
