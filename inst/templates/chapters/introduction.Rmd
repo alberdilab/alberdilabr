@@ -1,0 +1,14 @@
+# {{{title}}} {{{anchor}}}
+
+State the problem, why it matters, and what this publication contributes.
+
+## Background {#{{{slug}}}-background}
+
+Summarise the relevant prior work. Cite sources from `references.bib` with
+`[@R-base]`, which renders as [@R-base].
+
+## Aims {#{{{slug}}}-aims}
+
+1. First aim.
+2. Second aim.
+3. Third aim.

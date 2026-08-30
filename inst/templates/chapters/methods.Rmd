@@ -1,0 +1,15 @@
+# {{{title}}} {{{anchor}}}
+
+## Data {#{{{slug}}}-data}
+
+Describe the data sources, how they were obtained, and where they live in
+`data/`.
+
+```{r {{{slug}}}-load-data}
+# data <- readr::read_csv("data/example.csv")
+```
+
+## Analysis {#{{{slug}}}-analysis}
+
+Describe the statistical or computational approach. Keep the code that produces
+results in the chapter that reports them; keep shared setup in `R/setup.R`.

@@ -1,0 +1,13 @@
+# {{{title}}} {{{anchor}}}
+
+## Interpretation {#{{{slug}}}-interpretation}
+
+What do the results mean?
+
+## Limitations {#{{{slug}}}-limitations}
+
+What would change the conclusions?
+
+## Conclusions {#{{{slug}}}-conclusions}
+
+Close with the take-home message.

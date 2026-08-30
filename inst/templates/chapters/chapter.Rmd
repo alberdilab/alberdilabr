@@ -1,0 +1,6 @@
+# {{{title}}} {{{anchor}}}
+
+Write the chapter here.
+
+```{r {{{slug}}}-setup, include = FALSE}
+```

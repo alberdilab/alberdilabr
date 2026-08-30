@@ -1,0 +1,9 @@
+# {{{title}}} {{{anchor}}}
+
+Supporting material that would interrupt the main narrative.
+
+## Session information {#{{{slug}}}-session-info}
+
+```{r {{{slug}}}-session-info}
+sessionInfo()
+```

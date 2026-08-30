@@ -1,0 +1,156 @@
+---
+title: "Getting started with alberdilabr"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting started with alberdilabr}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+alberdilabr scaffolds reproducible publication websites. It creates the
+project, keeps chapter files and their ordering in step, validates the result,
+and wires up deployment to GitHub Pages.
+
+It does not render anything itself. Rendering belongs to
+[bookdown](https://bookdown.org), dependency pinning to
+[renv](https://rstudio.github.io/renv/), and deployment to GitHub Actions. The
+project you get is an ordinary bookdown project that builds with
+`bookdown::render_book()` whether or not this package is installed.
+
+## Create a project
+
+```r
+library(alberdilabr)
+
+create_publication(
+  path   = "my-analysis",
+  title  = "My Analysis",
+  author = "Jane Doe"
+)
+```
+
+That produces:
+
+```text
+my-analysis/
+├── my-analysis.Rproj
+├── index.Rmd              landing page and shared YAML front matter
+├── _bookdown.yml          chapter order and output directory
+├── _output.yml            bookdown::bs4_book configuration
+├── README.md
+├── references.bib
+├── .gitignore
+├── chapters/
+│   ├── 01-introduction.Rmd
+│   ├── 02-methods.Rmd
+│   ├── 03-results.Rmd
+│   └── 04-discussion.Rmd
+├── R/setup.R              options and libraries shared by every chapter
+├── data/
+├── figures/
+├── assets/style.css
+└── .github/workflows/publish.yml
+```
+
+`create_publication()` also initialises Git and, unless you pass
+`renv = FALSE`, an renv lockfile.
+
+## Write
+
+Add a chapter and it is created, numbered and registered in `_bookdown.yml` in
+one step:
+
+```r
+add_chapter("Sensitivity analysis")
+#> v Added chapter "sensitivity-analysis" at 'chapters/05-sensitivity-analysis.Rmd'.
+```
+
+Insert one in the middle and the chapters after it are renumbered to match:
+
+```r
+add_chapter("Study design", after = "introduction", template = "methods")
+```
+
+Reorder and remove chapters the same way. Every one of these keeps the files on
+disk and the `rmd_files` list in `_bookdown.yml` consistent:
+
+```r
+move_chapter("discussion", after = "results")
+remove_chapter("sensitivity-analysis")
+```
+
+Chapters are addressed by their slug (`"discussion"`), their filename
+(`"04-discussion.Rmd"`) or their path. See `chapter_templates()` for the
+starter templates.
+
+## Preview
+
+```r
+preview_publication()
+```
+
+This starts `bookdown::serve_book()`, which re-renders the chapter you are
+editing and reloads the browser. It is much faster than a full build, at the
+cost of occasionally stale cross-references between chapters.
+
+For a full production build:
+
+```r
+render_publication()
+```
+
+The site is written to `_site/`.
+
+## Validate
+
+```r
+check_publication()
+```
+
+```text
+-- Structure --
+v index.Rmd exists
+v 5 chapters registered in _bookdown.yml
+v all registered files exist
+v no unregistered chapter files
+
+-- Documents --
+v every chapter has exactly one top-level heading
+v chapter identifiers are unique
+! chapters/03-results.Rmd contains an unlabelled figure
+
+-- Publishing --
+v workflow uploads _site/, matching output_dir
+```
+
+Checks cover project structure, document structure (one top-level heading per
+chapter, unique heading identifiers and chunk labels, figures that can be
+cross-referenced), reproducibility, and agreement between the directory
+bookdown writes and the one the workflow uploads. No network access is
+performed.
+
+Add a full build as an integration test with:
+
+```r
+check_publication(render = TRUE)
+```
+
+## Publish
+
+The generated workflow renders the book on every push to `main` and uploads
+`_site/` as a GitHub Pages artifact. Rendered HTML is never committed.
+
+One manual step is required the first time: in the repository, go to
+**Settings → Pages → Build and deployment** and set **Source** to
+**GitHub Actions**.
+
+If you created the project with `renv = FALSE` and later want pinned
+dependencies:
+
+```r
+renv::init()
+use_github_publication(overwrite = TRUE)
+```
+
+`use_github_publication()` detects the lockfile and writes the workflow that
+restores from it.

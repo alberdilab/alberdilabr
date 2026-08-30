@@ -1,0 +1,37 @@
+Package: alberdilabr
+Title: Scaffold Reproducible, Publication-Ready 'bookdown' Websites
+Version: 0.1.0
+Authors@R: 
+    person("Antton", "Alberdi", , "antton.alberdi@sund.ku.dk", role = c("aut", "cre"))
+Description: Creates opinionated, reproducible publication projects that render
+    with 'bookdown' and deploy to GitHub Pages through GitHub Actions. The
+    package scaffolds the project, manages chapter files and their ordering,
+    and validates project structure. Generated projects are ordinary 'bookdown'
+    projects that remain renderable without this package.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+Depends:
+    R (>= 4.1)
+Imports:
+    cli,
+    fs,
+    rlang,
+    stats,
+    tools,
+    whisker,
+    yaml
+Suggests:
+    bookdown,
+    knitr,
+    renv,
+    rmarkdown,
+    rstudioapi,
+    servr,
+    testthat (>= 3.0.0),
+    withr
+Config/testthat/edition: 3
+VignetteBuilder: knitr
+URL: https://github.com/alberdilab/alberdilabr
+BugReports: https://github.com/alberdilab/alberdilabr/issues

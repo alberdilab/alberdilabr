@@ -1,0 +1,27 @@
+/* Custom styling for {{{title}}}.
+   Loaded by bookdown::bs4_book via the `css` entry in _output.yml. */
+
+:root {
+  --publication-accent: {{{primary_color}}};
+}
+
+/* Give figure captions a little more presence than the bs4_book default. */
+.figure .caption,
+p.caption {
+  font-size: 0.9rem;
+  color: #4a4a4a;
+  margin-top: 0.5rem;
+}
+
+/* Set off blockquotes used for notes and callouts. */
+blockquote {
+  border-left: 4px solid var(--publication-accent);
+  padding-left: 1rem;
+  color: #333;
+}
+
+/* Keep wide tables and code from breaking the page on small screens. */
+.table-wrapper,
+pre {
+  overflow-x: auto;
+}

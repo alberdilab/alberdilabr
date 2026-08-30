@@ -1,0 +1,18 @@
+# {{{title}}} {{{anchor}}}
+
+## Summary {#{{{slug}}}-summary}
+
+Report the findings. Every figure and table needs a chunk label so that it can
+be cross-referenced.
+
+```{r {{{slug}}}-example-figure, fig.cap = "Replace this caption."}
+plot(1:10, (1:10)^2, xlab = "x", ylab = "y", pch = 19)
+```
+
+Refer to it as Figure \@ref(fig:{{{slug}}}-example-figure).
+
+```{r {{{slug}}}-example-table}
+knitr::kable(head(mtcars[, 1:4]), caption = "Replace this caption.")
+```
+
+Refer to it as Table \@ref(tab:{{{slug}}}-example-table).
